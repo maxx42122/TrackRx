@@ -1,0 +1,2708 @@
+import 'dart:async';
+import 'dart:isolate';
+import 'dart:math';
+import 'dart:ui';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackrx/AuthenticationPatient/3typelogin.dart';
+//import 'package:trackrx/hospital/assign_medicine.dart';
+import '../AuthenticationPatient/SharedPrefencepatient.dart';
+import '../Patient/listpatient.dart';
+import './add_stock_model.dart';
+import 'productcategory.dart';
+import 'requestData.dart';
+import 'stock_list.dart';
+
+class Homepage extends StatefulWidget {
+  const Homepage({super.key});
+  @override
+  State createState() => _HomePageUi();
+}
+
+class _HomePageUi extends State {
+bool notification = true;
+    int notificationCount=0;
+  //int notificationCount=0;
+  int lesscount = 30;
+ // List<String> countlist = [];
+
+  List<String> Categorylist = [
+    "CardiacMedicine",
+    "HighCholestrol",
+    "Hypertension",
+    "Osteoarthritis",
+    "PainManagement"
+        "EyeMedicine",
+  ];
+
+
+
+    @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+
+    _timer = Timer.periodic(Duration(seconds: 3), (Timer timer) {
+      if (_currentPage < 4) {
+        _currentPage++;
+        _pageController.animateToPage(
+          _currentPage,
+          duration: Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Loop back to the first page without animation
+        _currentPage = 0;
+        _pageController.jumpToPage(_currentPage);
+      }
+    });
+
+    //////////////////////
+     Future.delayed(Duration(seconds: 0), () async {
+
+
+      await GetRequestData();
+              log("notification : ${notificationCount}" as num);
+
+    });
+    ////////////////////////
+  }
+//GetMthod////////////////////////////////////////////////////////////////
+
+  Future<void> GetRequestData() async {
+    for (int i = 0; i < Categorylist.length; i++) {
+      //log("_:${Categorylist[i]}");
+
+      QuerySnapshot response =
+          await FirebaseFirestore.instance.collection(Categorylist[i]).get();
+      for (int j = 0; j < response.docs.length; j++) {
+        //log(" Rs :${response.docs[j]['Rs']}");
+        //log("================${int.parse(response.docs[j]['quantity'])}");
+        if (int.parse(response.docs[j]['quantity']) < lesscount) {
+          /////// alert  medicine Name added
+        AlertlistModel.AlertData.add(response.docs[j]['medicineName']);
+        }
+      }
+   
+    }
+
+    setState(() {
+      
+    });
+     AlertlistModel.countmedicine=AlertlistModel.AlertData.length;
+    log(":::${AlertlistModel.countmedicine}");
+
+  
+  }
+
+  List<StockModel> todaylist = StockModel.data;
+
+
+
+  void remove() {
+    Navigator.pop(context);
+  }
+//////////////////imagemove///////////////////////////////////////////////////////
+
+  late PageController _pageController;
+  int _currentPage = 0;
+  late Timer _timer;
+
+
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+///////////////////////////////////////////////////////////////////////////////////
+  ///today card list
+  Padding todayCard(int index) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Container(
+        // width: 100,
+        // height: 100,
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color.fromRGBO(255, 171, 159, 159),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: GestureDetector(
+          onTap: () {
+            print("value:${todaylist[index].destination}");
+          },
+          child: Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Inventory Name:Omkar Inventory",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  "Medicine Name=${todaylist[index].MdName}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                Text(
+                  "Destination =${todaylist[index].destination}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                //  const  Spacer(),
+                Text(
+                  "Received Date :${todaylist[index].recevied}",
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  // maxLines: 5,
+                ),
+
+                Row(
+                  children: [
+                    const Spacer(),
+                    Text(
+                      "Quantity :${todaylist[index].quantity}",
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 5,
+                ),
+
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {},
+                      child: Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.blue,
+                        ),
+                        child: const Text(
+                          "Dismiss",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        //snackbar();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.blue,
+                        ),
+                        child: const Text(
+                          "Accept",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // AddData To the Request List
+
+  void addData() {
+    if (medicineName.text.trim().isNotEmpty &&
+        delivery.text.trim().isNotEmpty &&
+        quantitys.text.trim().isNotEmpty &&
+        recevieddate.text.trim().isNotEmpty) {
+      // data.add(
+      //   StockModel(MdName: medicineName.text, destination: delivery.text, quantity: quantitys.text, recevied: recevieddate.text)
+      // );
+
+      StockModel obj1 = StockModel(
+          MdName: medicineName.text,
+          destination: delivery.text,
+          quantity: quantitys.text,
+          recevied: recevieddate.text);
+      StockModel.modelObject(obj1);
+      Navigator.pop(context);
+
+      medicineName.clear();
+      delivery.clear();
+      quantitys.clear();
+      recevieddate.clear();
+      setState(() {});
+    }
+  }
+
+  ////snakbar
+  void snakbarmethod() {
+    SnackBar snack = SnackBar(
+      content: const Row(
+        children: [
+          Text(
+            "Sucessfully send A Request",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
+            ),
+          ),
+          Spacer(),
+          Icon(Icons.close)
+        ],
+      ),
+      duration: const Duration(seconds: 4),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      behavior: SnackBarBehavior.floating,
+      margin: EdgeInsets.all(10),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snack);
+  }
+
+  TextEditingController medicineName = TextEditingController();
+  TextEditingController delivery = TextEditingController();
+  TextEditingController quantitys = TextEditingController();
+  TextEditingController recevieddate = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      //const Color.fromARGB(255, 213, 229, 229),
+      appBar: AppBar(
+        title: const Column(
+          children: [
+            Text(
+              "Viraj Hospital",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.black,
+              ),
+            ),
+            Text(
+              "Inventory",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey,
+                // color: Color.fromRGBO(118, 108, 106, 0.357),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.white,
+        actions: [
+          // GestureDetector(
+          //   onTap: () {
+          //     notification = true;
+          //     Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+          //       return const RequestData();
+          //     }));
+          //     setState(() {});
+          //   },
+          //   child: Column(
+          //     children: [
+          //       notification
+          //           ? Container(
+          //               width: 30,
+          //               height: 20,
+          //               decoration: const BoxDecoration(
+          //                 shape: BoxShape.circle,
+          //                 // color: Colors.red,
+          //               ),
+          //               child: const Center(
+          //                 child: const Text(
+          //                   "1",
+          //                   style: TextStyle(
+          //                     fontSize: 12,
+          //                     fontWeight: FontWeight.w800,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             )
+          //           : Container(
+          //               width: 30,
+          //               height: 20,
+          //               decoration: const BoxDecoration(
+          //                 shape: BoxShape.circle,
+          //                 color: Colors.red,
+          //               ),
+          //               child: const Center(
+          //                 child: Text(
+          //                   "1",
+          //                   style: TextStyle(
+          //                     fontSize: 12,
+          //                     fontWeight: FontWeight.w800,
+          //                     color: Colors.white,
+          //                   ),
+          //                 ),
+          //               ),
+          //             ),
+          //       notification
+          //           ? const Icon(Icons.notifications)
+          //           : const Icon(
+          //               Icons.notifications,
+          //               color: Colors.red,
+          //             ),
+          //     ],
+          //   ),
+          // ),
+          Icon(Icons.notifications),
+          const SizedBox(
+            width: 10,
+          ),
+         GestureDetector(
+            onTap: () {
+              //notification = true;
+              AlertlistModel.countmedicine=0;
+              notificationCount=0;
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                return const RequestData();
+              }));
+              setState(() {});
+            },
+            child: Column(
+              children: [
+                (AlertlistModel.countmedicine > 0)
+                  
+                    ?
+                    
+                     Container(
+                        width: 30,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.red,
+                        ),
+                        child: Center(
+                          child: Text(
+                            "${AlertlistModel.countmedicine}",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 30,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          //color: Colors.red,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              // color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                (AlertlistModel.countmedicine>0)?
+                    const  Icon(
+                        Icons.alarm,
+                        color: Colors.red,
+                      )
+                    :const  Icon(Icons.alarm)
+              ],
+            ),
+          ),
+          const SizedBox(
+            width: 20,
+          ),
+          const SizedBox(
+            width: 10,
+          ),
+          GestureDetector(
+              onTap: () {
+                Sharedprefencepatient.StoredPData(
+                    ptype: "", Email: "", isLogin: false);
+                Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => typeLoginui()));
+              },
+              child: const Icon(Icons.logout)),
+          const SizedBox(
+            width: 20,
+          ),
+        ],
+      ),
+
+
+
+
+      
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 18, right: 18, top: 18),
+                child: Container(
+                  height: 200,
+                  width: MediaQuery.of(context).size.width,
+                  clipBehavior: Clip.antiAlias,
+                  decoration:
+                      BoxDecoration(borderRadius: BorderRadius.circular(20)),
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    children: [
+                      Image.asset(
+                        "assets/logo/a13.jpg",
+                        fit: BoxFit.cover,
+                        // height: 30,
+                      ),
+                      Image.asset(
+                        "assets/logo/a14.avif",
+                        fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        "assets/logo/a15.avif",
+                        fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        "assets/logo/a17.avif",
+                        fit: BoxFit.cover,
+                      ),
+                      Image.asset(
+                        "assets/logo/a18.avif",
+                        fit: BoxFit.cover,
+                      ),
+                    ],
+                  ),
+
+                  // loadingBuilder: (context, child, loadingProgress) {
+                  //   if (loadingProgress == null) return child;
+                  //   return const Center(child: CircularProgressIndicator());
+                  // },
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(
+            height: 10,
+          ),
+
+          const SizedBox(
+            height: 5,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Container(
+              // width: MediaQuery.of(context).size.width,
+              // height: 300,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                  // border: Border.all(
+                  //   width: 2.5,
+                  //   color: Colors.blueGrey,
+                  // ),
+
+                  borderRadius: BorderRadius.circular(20)),
+
+              child: Container(
+                decoration: const BoxDecoration(
+                    //color: Colors.white
+
+                    //gradient: LinearGradient(begin: Alignment.topLeft, colors: [
+                    // const Color.fromARGB(255, 173, 204, 219),
+                    // //const Color.fromARGB(255, 177, 213, 178),
+                    // const Color.fromARGB(255, 232, 240, 240),
+                    // const Color.fromARGB(255, 187, 210, 222),
+                    // Color.fromRGBO(72, 175, 198, 1),
+
+                    // Colors.white54,
+
+                    // Color.fromRGBO(72, 175, 198, 1),
+                    //]),
+                    ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: () {},
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 213, 229, 229),
+                                gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color.fromARGB(255, 204, 220, 216),
+                                      Color.fromARGB(255, 255, 255, 255)
+                                    ]),
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  top: 13, left: 8, right: 8, bottom: 8),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    height: 80,
+                                    child:
+                                        Image.asset("assets/logo/addstock.gif"),
+                                  ),
+                                  const Text(
+                                    "Add Stock \nItem",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+
+                        // product Category call
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) {
+                                return const Productcategory();
+                              }),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                                // color: Color.fromARGB(255, 213, 229, 229),
+                                gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color.fromARGB(255, 204, 220, 216),
+                                      Color.fromARGB(255, 255, 255, 255)
+                                    ]),
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    height: 80,
+                                    child: Image.asset("assets/logo/kit.gif"),
+                                  ),
+                                  const Text(
+                                    "Product\nCategory",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(
+                          height: 13,
+                        )
+                      ],
+                    ),
+
+                    ////////////////second collumn
+                    ///
+                    Spacer(),
+
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Column(
+                        //crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 213, 229, 229),
+                                gradient: const LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color.fromARGB(255, 204, 220, 216),
+                                      Color.fromARGB(255, 255, 255, 255)
+                                    ]),
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(20)),
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    child: Image.asset("assets/logo/gph.gif"),
+                                  ),
+                                  const Text(
+                                    "Sales",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 27,
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (context) {
+                                  return const Listpatient();
+                                }),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 213, 229, 229),
+                                  gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color.fromARGB(255, 204, 220, 216),
+                                        Color.fromARGB(255, 255, 255, 255)
+                                      ]),
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(20)),
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      child: Image.asset(
+                                        "assets/logo/pt1.gif",
+                                      ),
+                                    ),
+                                    const Text(
+                                      "Patient",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // SizedBox(
+                    //   width: 20,
+                    // )
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Container(
+              width: MediaQuery.of(context).size.width,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Color.fromRGBO(69, 177, 30, 1),
+                border: Border.all(color: Colors.black38),
+                gradient: const LinearGradient(colors: [
+                  //Color.fromRGBO(99, 177, 71, 1),
+                  //Color.fromRGBO(72, 175, 198, 1),
+                  Color.fromARGB(255, 172, 191, 201),
+                  //   Color.fromRGBO(72, 175, 198, 1),
+                  // Color.fromRGBO(69, 177, 30, 1),
+                  Colors.black12
+                ]),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(10),
+                child: Row(
+                  children: [
+                    Text(
+                      "Got any Questions?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Spacer(),
+                    Text(
+                      "Ask here",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 25,
+                    ),
+                    Icon(Icons.forward),
+                    SizedBox(
+                      width: 10,
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Container(
+              decoration: BoxDecoration(
+                  //border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text("Popular Brands",
+                        style: GoogleFonts.akatab(
+                            fontSize: 30, fontWeight: FontWeight.w800)
+
+                        // TextStyle(
+                        //   fontSize: 18,
+                        //   fontWeight: FontWeight.w700,
+                        //   color: Colors.black,
+                        // ),
+                        ),
+                    Text("List of Product from the Powerhouses",
+                        style: GoogleFonts.akatab(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey)
+
+                        // TextStyle(
+                        //   fontSize: 14,
+                        //   fontWeight: FontWeight.w400,
+                        //   color: Colors.grey,
+                        // ),
+                        ),
+
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/cipla.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Cipla",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          ////////////////////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/sun.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Sun",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          ////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/mankind.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Mankind",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          ////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/alkem.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Alkem",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          /////////////////////
+                        ],
+                      ),
+                    ),
+                    ///////////////////////////////////////////////
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/Abbot.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Abbott",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          ///////////////////////////
+
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/intas.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Intas",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          //////////////////////////////
+
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/lupin.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Intas",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          //////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/torrent.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Torrent",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ////////////////////////////////////////////////////
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/leeford.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Leeford",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          /////////////////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/aristo.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Aristo",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          ///////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/macleods.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Macleods",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          //////////////////////
+                          ///
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/drready.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Dr",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    ////////////////
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/Gsk.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Glaxo",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          /////////////////////
+                          ///
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/glenmark.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Glenmark",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          //////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/usv.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Usv",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          /////////////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/ipca.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Usv",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    /////////////////////////////////////////////////////////////////////
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/zydus.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Zydus",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          //////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/himalaya.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Himalaya",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          /////////////////////////////
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/micro.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Micro",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+
+                          ////////////////////////////////////
+
+                          Container(
+                            margin: EdgeInsets.all(15),
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.5),
+                                        spreadRadius: 0,
+                                        blurRadius: 10,
+                                        offset: Offset(0, 7),
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    "assets/logo/alembic.jpg",
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                const Text(
+                                  "Alembic",
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Row(
+          //   children: [
+
+          //     ListView.builder(
+          //       scrollDirection: Axis.horizontal,
+          //       physics: BouncingScrollPhysics(),
+          //       itemCount:todaylist.length,
+          //      shrinkWrap: true,
+          //       itemBuilder: (BuildContext context,int index){
+
+          //         return todayCard(index);
+
+          //       },
+          //     )
+          //   ],
+          // ),
+
+          // Padding(
+          //   padding: const EdgeInsets.all(10),
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       const Text(
+          //         "Know your Product",
+          //         style: TextStyle(
+          //           fontSize: 18,
+          //           fontWeight: FontWeight.w900,
+          //         ),
+          //       ),
+          //       const SizedBox(
+          //         height: 5,
+          //       ),
+          //       const Text(
+          //         "Top 100 most Popular Products Sold at Inventory",
+          //         style: TextStyle(
+          //           fontSize: 15,
+          //           fontWeight: FontWeight.w600,
+          //           color: Colors.grey,
+          //         ),
+          //       ),
+          //       const SizedBox(
+          //         height: 10,
+          //       ),
+          //       SingleChildScrollView(
+          //         scrollDirection: Axis.horizontal,
+          //         child: Row(
+          //           children: [
+          //             Container(
+          //               width: 250,
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Container(
+          //                     width: 250,
+          //                     height: 130,
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(10),
+          //                     ),
+          //                     clipBehavior: Clip.antiAlias,
+          //                     child: Image.asset(
+          //                       "assets/logo/offercard1.jpg",
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 5,
+          //                   ),
+          //                   const Text(
+          //                     "Dolo 650 Tablet के फायदे |Paracetamol Tablet ke U....",
+          //                     style: TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.w900,
+          //                       color: Colors.black,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 10,
+          //                   ),
+          //                   const Text(
+          //                     " 461 Views",
+          //                     style: TextStyle(
+          //                       fontSize: 15,
+          //                       fontWeight: FontWeight.w700,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+
+          //             /////second cart/////////////////
+
+          //             Container(
+          //               width: 250,
+          //               margin: EdgeInsets.all(10),
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Container(
+          //                     width: 250,
+          //                     height: 130,
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(10),
+          //                     ),
+          //                     clipBehavior: Clip.antiAlias,
+          //                     child: Image.asset(
+          //                       "assets/logo/offercard2.jpg",
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 5,
+          //                   ),
+          //                   const Text(
+          //                     "Nicip Plus Tablet के फायदे |Nimesulide Paracetamol.....",
+          //                     style: TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.w900,
+          //                       color: Colors.black,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 10,
+          //                   ),
+          //                   const Text(
+          //                     " 461 Views",
+          //                     style: TextStyle(
+          //                       fontSize: 15,
+          //                       fontWeight: FontWeight.w700,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+
+          //             //////Third Card///////
+          //             Container(
+          //               width: 250,
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Container(
+          //                     width: 250,
+          //                     height: 130,
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(10),
+          //                     ),
+          //                     clipBehavior: Clip.antiAlias,
+          //                     child: Image.asset(
+          //                       "assets/logo/offercard1.jpg",
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 5,
+          //                   ),
+          //                   const Text(
+          //                     "Dolo 650 Tablet के फायदे |Paracetamol Tablet ke U....",
+          //                     style: TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.w900,
+          //                       color: Colors.black,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 10,
+          //                   ),
+          //                   const Text(
+          //                     " 461 Views",
+          //                     style: TextStyle(
+          //                       fontSize: 15,
+          //                       fontWeight: FontWeight.w700,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+
+          //             /// Fourthcard///////
+          //             Container(
+          //               width: 250,
+          //               margin: EdgeInsets.all(10),
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Container(
+          //                     width: 250,
+          //                     height: 130,
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(10),
+          //                     ),
+          //                     clipBehavior: Clip.antiAlias,
+          //                     child: Image.asset(
+          //                       "assets/logo/offercard1.jpg",
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 5,
+          //                   ),
+          //                   const Text(
+          //                     "Dolo 650 Tablet के फायदे |Paracetamol Tablet ke U....",
+          //                     style: TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.w900,
+          //                       color: Colors.black,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 10,
+          //                   ),
+          //                   const Text(
+          //                     " 461 Views",
+          //                     style: TextStyle(
+          //                       fontSize: 15,
+          //                       fontWeight: FontWeight.w700,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+
+          //             //// Fiveth Row///
+          //             Container(
+          //               width: 250,
+          //               //margin: EdgeInsets.all(10),
+          //               child: Column(
+          //                 crossAxisAlignment: CrossAxisAlignment.start,
+          //                 children: [
+          //                   Container(
+          //                     width: 250,
+          //                     height: 130,
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(10),
+          //                     ),
+          //                     clipBehavior: Clip.antiAlias,
+          //                     child: Image.asset(
+          //                       "assets/logo/offercard1.jpg",
+          //                       fit: BoxFit.cover,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 5,
+          //                   ),
+          //                   const Text(
+          //                     "Dolo 650 Tablet के फायदे |Paracetamol Tablet ke U....",
+          //                     style: TextStyle(
+          //                       fontSize: 16,
+          //                       fontWeight: FontWeight.w900,
+          //                       color: Colors.black,
+          //                     ),
+          //                   ),
+          //                   const SizedBox(
+          //                     height: 10,
+          //                   ),
+          //                   const Text(
+          //                     " 461 Views",
+          //                     style: TextStyle(
+          //                       fontSize: 15,
+          //                       fontWeight: FontWeight.w700,
+          //                       color: Colors.grey,
+          //                     ),
+          //                   ),
+          //                 ],
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+
+          // Padding(
+          //   padding: const EdgeInsets.all(10),
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       const Text(
+          //         "Cardiac",
+          //         style: TextStyle(
+          //           fontSize: 18,
+          //           fontWeight: FontWeight.w800,
+          //           color: Colors.black,
+          //         ),
+          //       ),
+          //       const SizedBox(
+          //         height: 5,
+          //       ),
+          //       SingleChildScrollView(
+          //         scrollDirection: Axis.horizontal,
+          //         child: Row(
+          //           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //           children: [
+          //             Stack(
+          //               children: [
+          //                 Container(
+          //                   width: 180,
+          //                   height: 330,
+          //                   decoration: BoxDecoration(
+          //                       border: Border.all(width: 1),
+          //                       borderRadius: BorderRadius.circular(10)),
+          //                   child: Expanded(
+          //                     child: Column(
+          //                       children: [
+          //                         const SizedBox(
+          //                           height: 5,
+          //                         ),
+          //                         Container(
+          //                           width: 100,
+          //                           height: 120,
+          //                           child: Image.network(
+          //                             "https://tse4.mm.bing.net/th?id=OIP.E9aMpnNHkcUptj-QnNxU4wHaG8&pid=Api&P=0&h=180",
+          //                             fit: BoxFit.cover,
+          //                           ),
+          //                         ),
+          //                         const Text(
+          //                           "VERAPRES 120 SR TABLET",
+          //                           style: TextStyle(
+          //                             fontSize: 15,
+          //                             fontWeight: FontWeight.w700,
+          //                           ),
+          //                           textAlign: TextAlign.center,
+          //                         ),
+          //                         const SizedBox(
+          //                           height: 5,
+          //                         ),
+          //                         const Text(
+          //                           "Strip of 10 Tablets",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.grey,
+          //                           ),
+          //                         ),
+          //                         const SizedBox(
+          //                           height: 5,
+          //                         ),
+          //                         const Text(
+          //                           "Verapamil 120 mg",
+          //                           style: TextStyle(
+          //                             fontSize: 12,
+          //                             fontWeight: FontWeight.w700,
+          //                           ),
+          //                         ),
+          //                         const SizedBox(
+          //                           height: 5,
+          //                         ),
+          //                         const Row(
+          //                           mainAxisAlignment: MainAxisAlignment.center,
+          //                           children: [
+          //                             const Text(
+          //                               " RS:65",
+          //                               style: TextStyle(
+          //                                   fontSize: 10,
+          //                                   fontWeight: FontWeight.w500),
+          //                             ),
+          //                             SizedBox(
+          //                               width: 10,
+          //                             ),
+          //                             const Text(
+          //                               "34% OFF",
+          //                               style: TextStyle(
+          //                                 fontSize: 10,
+          //                                 fontWeight: FontWeight.w700,
+          //                                 color: Colors.brown,
+          //                               ),
+          //                             ),
+          //                           ],
+          //                         ),
+          //                         const SizedBox(
+          //                           height: 5,
+          //                         ),
+          //                         const Text(
+          //                           "Expiry:05/2025",
+          //                           style: TextStyle(
+          //                             fontSize: 12,
+          //                             fontWeight: FontWeight.w700,
+          //                           ),
+          //                         ),
+          //                         Spacer(),
+          //                         Padding(
+          //                           padding: const EdgeInsets.all(10),
+          //                           child: GestureDetector(
+          //                             onTap: () {
+          //                               // showAddCardBottomSheet();
+          //                             },
+          //                             child: Container(
+          //                               width: 200,
+          //                               height: 35,
+          //                               decoration: BoxDecoration(
+          //                                   color: Colors.blue,
+          //                                   borderRadius:
+          //                                       BorderRadius.circular(10)),
+          //                               child: const Center(
+          //                                 child: const Text(
+          //                                   "ADD TO CART",
+          //                                   style: TextStyle(
+          //                                     fontSize: 15,
+          //                                   ),
+          //                                   textAlign: TextAlign.center,
+          //                                 ),
+          //                               ),
+          //                             ),
+          //                           ),
+          //                         )
+          //                       ],
+          //                     ),
+          //                   ),
+          //                 ),
+          //                 Positioned(
+          //                   top: 5,
+          //                   left: 5,
+          //                   child: Container(
+          //                     padding: EdgeInsets.all(2),
+          //                     decoration: BoxDecoration(
+          //                       borderRadius: BorderRadius.circular(5),
+          //                       color: Colors.red,
+          //                     ),
+          //                     child: const Text(
+          //                       "In Stock",
+          //                       style: TextStyle(
+          //                         fontSize: 13,
+          //                         fontWeight: FontWeight.w900,
+          //                         color: Colors.white,
+          //                       ),
+          //                     ),
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+
+          //             const SizedBox(
+          //               width: 10,
+          //             ),
+
+          //             ////////////////second card//////////////////
+          //             Container(
+          //               width: 180,
+          //               height: 330,
+          //               decoration: BoxDecoration(
+          //                   border: Border.all(width: 1),
+          //                   borderRadius: BorderRadius.circular(10)),
+          //               child: Expanded(
+          //                 child: Column(
+          //                   children: [
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Container(
+          //                       width: 100,
+          //                       height: 120,
+          //                       child: Image.network(
+          //                         "https://tse3.mm.bing.net/th?id=OIP.76C09LwKK29PFF3BZUtdRgHaHa&pid=Api&P=0&h=180",
+          //                         fit: BoxFit.cover,
+          //                       ),
+          //                     ),
+          //                     const Text(
+          //                       "DERMINA VITAMIN",
+          //                       style: TextStyle(
+          //                         fontSize: 15,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "DERMINA JO JOBA VITAMIN ",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Row(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         const Text(
+          //                           " RS:45",
+          //                           style: TextStyle(
+          //                               fontSize: 10,
+          //                               fontWeight: FontWeight.w500),
+          //                         ),
+          //                         SizedBox(
+          //                           width: 10,
+          //                         ),
+          //                         const Text(
+          //                           "76% OFF",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.brown,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Expiry:02/2025",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     Spacer(),
+          //                     Padding(
+          //                       padding: const EdgeInsets.all(10),
+          //                       child: Container(
+          //                         width: 200,
+          //                         height: 35,
+          //                         decoration: BoxDecoration(
+          //                             color: Colors.blue,
+          //                             borderRadius: BorderRadius.circular(10)),
+          //                         child: const Center(
+          //                           child: const Text(
+          //                             "ADD TO CART",
+          //                             style: TextStyle(
+          //                               fontSize: 15,
+          //                             ),
+          //                             textAlign: TextAlign.center,
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+
+          //             const SizedBox(
+          //               width: 10,
+          //             ),
+
+          //             /// Thirds Card
+          //             ///
+          //             Container(
+          //               width: 180,
+          //               height: 330,
+          //               decoration: BoxDecoration(
+          //                   border: Border.all(width: 1),
+          //                   borderRadius: BorderRadius.circular(10)),
+          //               child: Expanded(
+          //                 child: Column(
+          //                   children: [
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Container(
+          //                       width: 100,
+          //                       height: 120,
+          //                       child: Image.network(
+          //                         "https://tse1.mm.bing.net/th?id=OIP.iHNnpp2nZN5Hwb69BH2z3gAAAA&pid=Api&P=0&h=180",
+          //                         fit: BoxFit.cover,
+          //                       ),
+          //                     ),
+          //                     const Text(
+          //                       "TRISHGLOW OAT MEAL & SHEA BUTTER",
+          //                       style: TextStyle(
+          //                         fontSize: 15,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Oat Meal & shea Butter .....",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Row(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         const Text(
+          //                           " RS:32",
+          //                           style: TextStyle(
+          //                               fontSize: 10,
+          //                               fontWeight: FontWeight.w500),
+          //                         ),
+          //                         SizedBox(
+          //                           width: 10,
+          //                         ),
+          //                         const Text(
+          //                           "76% OFF",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.brown,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Expiry:08/2025",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     Spacer(),
+          //                     Padding(
+          //                       padding: const EdgeInsets.all(10),
+          //                       child: Container(
+          //                         width: 200,
+          //                         height: 35,
+          //                         decoration: BoxDecoration(
+          //                             color: Colors.blue,
+          //                             borderRadius: BorderRadius.circular(10)),
+          //                         child: const Center(
+          //                           child: const Text(
+          //                             "ADD TO CART",
+          //                             style: TextStyle(
+          //                               fontSize: 15,
+          //                             ),
+          //                             textAlign: TextAlign.center,
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+          //             const SizedBox(
+          //               width: 10,
+          //             ),
+
+          //             // fouth card
+
+          //             Container(
+          //               width: 180,
+          //               height: 330,
+          //               decoration: BoxDecoration(
+          //                   border: Border.all(width: 1),
+          //                   borderRadius: BorderRadius.circular(10)),
+          //               child: Expanded(
+          //                 child: Column(
+          //                   children: [
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Container(
+          //                       width: 100,
+          //                       height: 120,
+          //                       child: Image.network(
+          //                         "https://tse4.mm.bing.net/th?id=OIP.ZQEl4e55F9--j6wmtQAQswHaHa&pid=Api&P=0&h=180",
+          //                         fit: BoxFit.cover,
+          //                       ),
+          //                     ),
+          //                     const Text(
+          //                       "CALLYRIUM LOTION",
+          //                       style: TextStyle(
+          //                         fontSize: 15,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Calamine lotion contai .....",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Row(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         const Text(
+          //                           " RS:32",
+          //                           style: TextStyle(
+          //                               fontSize: 10,
+          //                               fontWeight: FontWeight.w500),
+          //                         ),
+          //                         SizedBox(
+          //                           width: 10,
+          //                         ),
+          //                         const Text(
+          //                           "76% OFF",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.brown,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Expiry:08/2025",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     Spacer(),
+          //                     Padding(
+          //                       padding: const EdgeInsets.all(10),
+          //                       child: Container(
+          //                         width: 200,
+          //                         height: 35,
+          //                         decoration: BoxDecoration(
+          //                             color: Colors.blue,
+          //                             borderRadius: BorderRadius.circular(10)),
+          //                         child: const Center(
+          //                           child: const Text(
+          //                             "ADD TO CART",
+          //                             style: TextStyle(
+          //                               fontSize: 15,
+          //                             ),
+          //                             textAlign: TextAlign.center,
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+
+          //             const SizedBox(
+          //               width: 10,
+          //             ),
+
+          //             // fiveth row
+          //             Container(
+          //               width: 180,
+          //               height: 330,
+          //               decoration: BoxDecoration(
+          //                   border: Border.all(width: 1),
+          //                   borderRadius: BorderRadius.circular(10)),
+          //               child: Expanded(
+          //                 child: Column(
+          //                   children: [
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Container(
+          //                       width: 100,
+          //                       height: 120,
+          //                       child: Image.network(
+          //                         "https://tse3.mm.bing.net/th?id=OIP.SN2VeD68QzGVVZgR5lvQvgHaHa&pid=Api&P=0&h=180",
+          //                         fit: BoxFit.cover,
+          //                       ),
+          //                     ),
+          //                     const Text(
+          //                       "DERMINA ANTI ACNE FACEWASH",
+          //                       style: TextStyle(
+          //                         fontSize: 15,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Dermina Anti Acne Face .....",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Row(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         const Text(
+          //                           " RS:32",
+          //                           style: TextStyle(
+          //                               fontSize: 10,
+          //                               fontWeight: FontWeight.w500),
+          //                         ),
+          //                         SizedBox(
+          //                           width: 10,
+          //                         ),
+          //                         const Text(
+          //                           "76% OFF",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.brown,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Expiry:08/2025",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     Spacer(),
+          //                     Padding(
+          //                       padding: const EdgeInsets.all(10),
+          //                       child: Container(
+          //                         width: 200,
+          //                         height: 35,
+          //                         decoration: BoxDecoration(
+          //                             color: Colors.blue,
+          //                             borderRadius: BorderRadius.circular(10)),
+          //                         child: const Center(
+          //                           child: const Text(
+          //                             "ADD TO CART",
+          //                             style: TextStyle(
+          //                               fontSize: 15,
+          //                             ),
+          //                             textAlign: TextAlign.center,
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+
+          //             const SizedBox(
+          //               width: 10,
+          //             ),
+
+          //             // sixth card
+          //             Container(
+          //               width: 180,
+          //               height: 330,
+          //               decoration: BoxDecoration(
+          //                   border: Border.all(width: 1),
+          //                   borderRadius: BorderRadius.circular(10)),
+          //               child: Expanded(
+          //                 child: Column(
+          //                   children: [
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     Container(
+          //                       width: 100,
+          //                       height: 120,
+          //                       child: Image.network(
+          //                         "https://tse3.mm.bing.net/th?id=OIP.EIGTA9b_kr3XGmfxiPmrQgHaHa&pid=Api&P=0&h=180",
+          //                         fit: BoxFit.cover,
+          //                       ),
+          //                     ),
+          //                     const Text(
+          //                       "PEARLDEW DEEP CLEANSING FACE",
+          //                       style: TextStyle(
+          //                         fontSize: 15,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                       textAlign: TextAlign.center,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Pearldew Deep Cleans .....",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Row(
+          //                       mainAxisAlignment: MainAxisAlignment.center,
+          //                       children: [
+          //                         const Text(
+          //                           " RS:32",
+          //                           style: TextStyle(
+          //                               fontSize: 10,
+          //                               fontWeight: FontWeight.w500),
+          //                         ),
+          //                         SizedBox(
+          //                           width: 10,
+          //                         ),
+          //                         const Text(
+          //                           "76% OFF",
+          //                           style: TextStyle(
+          //                             fontSize: 10,
+          //                             fontWeight: FontWeight.w700,
+          //                             color: Colors.brown,
+          //                           ),
+          //                         ),
+          //                       ],
+          //                     ),
+          //                     const SizedBox(
+          //                       height: 5,
+          //                     ),
+          //                     const Text(
+          //                       "Expiry:08/2025",
+          //                       style: TextStyle(
+          //                         fontSize: 12,
+          //                         fontWeight: FontWeight.w700,
+          //                       ),
+          //                     ),
+          //                     Spacer(),
+          //                     Padding(
+          //                       padding: const EdgeInsets.all(10),
+          //                       child: Container(
+          //                         width: 200,
+          //                         height: 35,
+          //                         decoration: BoxDecoration(
+          //                             color: Colors.blue,
+          //                             borderRadius: BorderRadius.circular(10)),
+          //                         child: const Center(
+          //                           child: const Text(
+          //                             "ADD TO CART",
+          //                             style: TextStyle(
+          //                               fontSize: 15,
+          //                             ),
+          //                             textAlign: TextAlign.center,
+          //                           ),
+          //                         ),
+          //                       ),
+          //                     )
+          //                   ],
+          //                 ),
+          //               ),
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+        ]),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+
+          BottomNavigationBarItem(
+              icon: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) {
+                        return const StockList();
+                      }),
+                    );
+                  },
+                  child: Icon(Icons.storage)),
+              label: "Stock"),
+
+          //  BottomNavigationBarItem(
+          //   icon:Icon(Icons.bar_chart),
+          //   label: "Stock"
+
+          // ),
+
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
+        ],
+      ),
+    );
+  }
+}

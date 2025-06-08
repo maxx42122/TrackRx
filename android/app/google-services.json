@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "782364550494",
+    "project_id": "trackrx-ea1da",
+    "storage_bucket": "trackrx-ea1da.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782364550494:android:40ca73f7bc71efc9f21bcf",
+        "android_client_info": {
+          "package_name": "com.example.trackrx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjC09JvQcT61WlD3qx37xpTwrfwS2_-yc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
